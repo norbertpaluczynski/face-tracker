@@ -22,10 +22,11 @@ from shutil import copyfile
 parser = argparse.ArgumentParser(description='Choose mode of capturing video')
 parser.add_argument('--mode', metavar='mode', type=str, help='Mode of capturing the video', required=True, nargs=1, choices=['webcam', 'ipcam'])
 parser.add_argument('--source', metavar='source', type=str, help='Source of the video: URL or webcam ID', nargs=1, default='0')
+parser.add_argument('--format', metavar='format', type=str, help='Input format', required=False, nargs=1, default='0', choices=['image', 'video'])
 args = parser.parse_args()
 mode = args.mode[0]
 source = args.source[0]
-
+input_format = args.format[0]
 
 connection = sqlite3.connect('database.db')
 conn = connection.cursor()
@@ -78,14 +79,16 @@ def add_face_to_database(result_uuid, face_uuid, image_uuid, datetime):
 if __name__ == '__main__':
     if mode == 'webcam':
         cap = cv2.VideoCapture(int(source))
+    else:
+        cap = cv2.VideoCapture(source)
     
     faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     padding = 15
 
     while True:
-        if mode=='webcam':
+        if mode=='webcam' or (mode == 'ipcam' and input_format=='video'):
             _, frame = cap.read()
-        elif mode == 'ipcam':
+        elif mode == 'ipcam' and input_format == 'image':
             imgResp = urllib.request.urlopen(source)
             imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
             frame = cv2.imdecode(imgNp, -1)
